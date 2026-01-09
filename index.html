@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Private Script Uploader</title>
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:#0f1724;color:#e6eef8;display:flex;align-items:center;justify-content:center;height:100vh;margin:0 }
+    .card { width:720px;background:#0b1220;padding:22px;border-radius:12px;box-shadow:0 8px 30px rgba(2,6,23,0.6) }
+    input,textarea { width:100%;padding:10px;border-radius:8px;border:1px solid #233041;background:#061124;color:#e6eef8;margin-top:8px }
+    label { font-size:13px;color:#9fb0c9 }
+    button { margin-top:12px;padding:10px 14px;border-radius:8px;border:0;background:#06b6d4;color:#04202a;font-weight:600;cursor:pointer }
+    .small { font-size:12px;color:#93a7bd }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Private Script Uploader</h2>
+    <p class="small">Enter your admin secret (kept privately). Uploads are only visible to the bot fetches.</p>
+
+    <label>Admin Secret</label>
+    <input id="secret" placeholder="Enter admin secret (kept private)" />
+
+    <label>Title</label>
+    <input id="title" placeholder="Script title" />
+
+    <label>Description</label>
+    <input id="desc" placeholder="Short description" />
+
+    <label>Image URL</label>
+    <input id="image" placeholder="https://..." />
+
+    <label>Game link</label>
+    <input id="gamelink" placeholder="https://www.roblox.com/games/..." />
+
+    <label>Script code</label>
+    <textarea id="code" rows="8" placeholder="Paste your Lua script here"></textarea>
+
+    <label><input type="checkbox" id="keyreq" /> Key required (Work.ink)</label>
+
+    <button id="upload">Upload (private)</button>
+    <p id="status" class="small"></p>
+  </div>
+
+  <script>
+    const upload = document.getElementById('upload');
+    const status = document.getElementById('status');
+
+    upload.addEventListener('click', async () => {
+      status.textContent = 'Uploading...';
+      const secret = document.getElementById('secret').value.trim();
+      if (!secret) return status.textContent = 'Admin secret required';
+
+      const payload = {
+        title: document.getElementById('title').value.trim(),
+        description: document.getElementById('desc').value.trim(),
+        image: document.getElementById('image').value.trim(),
+        game_link: document.getElementById('gamelink').value.trim(),
+        code: document.getElementById('code').value,
+        key_required: document.getElementById('keyreq').checked
+      };
+
+      try {
+        const res = await fetch('/api/admin-upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-secret': secret
+          },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          status.textContent = 'Error: ' + (json.error || JSON.stringify(json));
+        } else {
+          status.textContent = 'Uploaded: ' + json.item.id;
+          // clear minimal fields
+          document.getElementById('title').value=''; document.getElementById('code').value='';
+        }
+      } catch (e) {
+        status.textContent = 'Network error: ' + e.message;
+      }
+    });
+  </script>
+</body>
+</html>
